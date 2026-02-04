@@ -2,6 +2,7 @@ package cn.leomc.teamprojecte;
 
 import com.mojang.logging.LogUtils;
 import moze_intel.projecte.api.capabilities.PECapabilities;
+import moze_intel.projecte.api.capabilities.IKnowledgeProvider;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -52,7 +53,10 @@ public class TeamProjectE {
     }
 
     public static void sync(ServerPlayer player) {
-        player.getCapability(PECapabilities.KNOWLEDGE_CAPABILITY).ifPresent(provider -> provider.sync(player));
+        IKnowledgeProvider provider = player.getCapability(PECapabilities.KNOWLEDGE_CAPABILITY);
+        if (provider != null) {
+            provider.sync(player);
+        }
     }
 
     public static List<ServerPlayer> getOnlineTeamMembers(UUID uuid) {

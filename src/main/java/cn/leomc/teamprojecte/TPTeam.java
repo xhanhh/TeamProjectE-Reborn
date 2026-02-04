@@ -5,6 +5,7 @@ import moze_intel.projecte.api.ItemInfo;
 import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.player.Player;
 
@@ -40,8 +41,11 @@ public class TPTeam {
         switch (version) {
             case "" -> {
                 this.knowledge = new KnowledgeData.Sharing();
-                tag.getList("knowledge", Tag.TAG_COMPOUND).stream().map(t -> ItemInfo.read(((CompoundTag) t))).filter(Objects::nonNull)
-                        .forEach(info -> this.knowledge.addKnowledge(info, Util.NIL_UUID));
+                for (Tag t : tag.getList("knowledge", Tag.TAG_COMPOUND)) {
+                    CompoundTag ct = (CompoundTag) t;
+                    ItemInfo.CODEC.parse(NbtOps.INSTANCE, ct).result()
+                            .ifPresent(info -> this.knowledge.addKnowledge(info, Util.NIL_UUID));
+                }
                 this.emc = new EMCData.Sharing();
                 this.emc.setEMC(new BigInteger(tag.getString("emc")), Util.NIL_UUID);
             }

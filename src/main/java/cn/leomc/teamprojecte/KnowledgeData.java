@@ -4,11 +4,11 @@ import moze_intel.projecte.api.ItemInfo;
 import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public interface KnowledgeData {
 
@@ -95,7 +95,10 @@ public interface KnowledgeData {
         @Override
         public void load(CompoundTag tag) {
             knowledge.clear();
-            knowledge.addAll(tag.getList("knowledge", Tag.TAG_COMPOUND).stream().map(t -> ItemInfo.read(((CompoundTag) t))).filter(Objects::nonNull).toList());
+            ListTag list = tag.getList("knowledge", Tag.TAG_COMPOUND);
+            for (Tag entry : list) {
+                ItemInfo.CODEC.parse(NbtOps.INSTANCE, entry).result().ifPresent(knowledge::add);
+            }
             fullKnowledge = tag.getBoolean("fullKnowledge");
         }
 
@@ -103,8 +106,9 @@ public interface KnowledgeData {
         public CompoundTag save() {
             CompoundTag tag = new CompoundTag();
             ListTag itemInfos = new ListTag();
-            for (ItemInfo info : knowledge)
-                itemInfos.add(info.write(new CompoundTag()));
+            for (ItemInfo info : knowledge) {
+                ItemInfo.CODEC.encodeStart(NbtOps.INSTANCE, info).result().ifPresent(itemInfos::add);
+            }
             tag.put("knowledge", itemInfos);
             tag.putBoolean("fullKnowledge", fullKnowledge);
             tag.putString("type", getType());
@@ -177,8 +181,11 @@ public interface KnowledgeData {
             fullKnowledge.clear();
             tag.getList("knowledge", Tag.TAG_COMPOUND).forEach(t -> {
                 CompoundTag ct = (CompoundTag) t;
-                knowledge.put(ct.getUUID("player"),
-                        ct.getList("knowledge", Tag.TAG_COMPOUND).stream().map(i -> ItemInfo.read(((CompoundTag) i))).filter(Objects::nonNull).collect(Collectors.toSet()));
+                Set<ItemInfo> playerKnowledge = new HashSet<>();
+                for (Tag entry : ct.getList("knowledge", Tag.TAG_COMPOUND)) {
+                    ItemInfo.CODEC.parse(NbtOps.INSTANCE, entry).result().ifPresent(playerKnowledge::add);
+                }
+                knowledge.put(ct.getUUID("player"), playerKnowledge);
             });
 
             tag.getList("fullKnowledge", Tag.TAG_INT_ARRAY).forEach(t -> fullKnowledge.add(NbtUtils.loadUUID(t)));
@@ -193,7 +200,7 @@ public interface KnowledgeData {
                 CompoundTag t = new CompoundTag();
                 t.putUUID("player", uuid);
                 ListTag list = new ListTag();
-                knowledge.forEach(info -> list.add(info.write(new CompoundTag())));
+                knowledge.forEach(info -> ItemInfo.CODEC.encodeStart(NbtOps.INSTANCE, info).result().ifPresent(list::add));
                 t.put("knowledge", list);
                 k.add(t);
             });

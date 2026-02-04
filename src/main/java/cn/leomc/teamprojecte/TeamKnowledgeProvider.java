@@ -1,27 +1,28 @@
 package cn.leomc.teamprojecte;
 
 import com.google.common.base.Suppliers;
+import cn.leomc.teamprojecte.mixin.KnowledgeAttachmentAccessor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import moze_intel.projecte.api.ItemInfo;
 import moze_intel.projecte.api.capabilities.IKnowledgeProvider;
-import moze_intel.projecte.api.capabilities.PECapabilities;
-import moze_intel.projecte.api.event.PlayerKnowledgeChangeEvent;
 import moze_intel.projecte.emc.EMCMappingHandler;
-import moze_intel.projecte.emc.nbt.NBTManager;
+import moze_intel.projecte.emc.components.ComponentProcessorHelper;
 import moze_intel.projecte.gameObjs.items.Tome;
-import moze_intel.projecte.network.PacketHandler;
-import moze_intel.projecte.network.packets.IPEPacket;
+import moze_intel.projecte.api.event.PlayerKnowledgeChangeEvent;
+import moze_intel.projecte.impl.capability.KnowledgeImpl;
+import moze_intel.projecte.impl.capability.KnowledgeImpl.KnowledgeAttachment;
 import moze_intel.projecte.network.packets.to_client.knowledge.KnowledgeSyncChangePKT;
 import moze_intel.projecte.network.packets.to_client.knowledge.KnowledgeSyncEmcPKT;
 import moze_intel.projecte.network.packets.to_client.knowledge.KnowledgeSyncInputsAndLocksPKT;
 import moze_intel.projecte.network.packets.to_client.knowledge.KnowledgeSyncPKT;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +45,8 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
     }
 
     private void fireChangedEvent() {
-        getTeam().getAll()
-                .forEach(uuid -> NeoForge.EVENT_BUS.post(new PlayerKnowledgeChangeEvent(uuid)));
+        TeamProjectE.getAllOnline(getTeam().getAll())
+                .forEach(player -> NeoForge.EVENT_BUS.post(new PlayerKnowledgeChangeEvent(player)));
     }
 
     private TPTeam getTeam() {
@@ -79,14 +80,14 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
 
     @Nullable
     private ItemInfo getIfPersistent(@NotNull ItemInfo info) {
-        if (!info.hasNBT() || EMCMappingHandler.hasEmcValue(info)) {
-            //If we have no NBT or the base mapping has an emc value for our item with the given NBT
+        if (!info.hasModifiedComponents() || EMCMappingHandler.hasEmcValue(info)) {
+            //If we have no extra components or the base mapping has an emc value for our item with the given components
             // then we don't have an extended state
             return null;
         }
-        ItemInfo cleanedInfo = NBTManager.getPersistentInfo(info);
-        if (cleanedInfo.hasNBT() && !EMCMappingHandler.hasEmcValue(cleanedInfo)) {
-            //If we still have NBT after unimportant parts being stripped and it doesn't
+        ItemInfo cleanedInfo = ComponentProcessorHelper.instance().getPersistentInfo(info);
+        if (cleanedInfo.hasModifiedComponents() && !EMCMappingHandler.hasEmcValue(cleanedInfo)) {
+            //If we still have extra components after unimportant parts being stripped and it doesn't
             // directly have an EMC value, then we it has some persistent information
             return cleanedInfo;
         }
@@ -101,7 +102,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
             ItemInfo persistentInfo = getIfPersistent(info);
             return persistentInfo == null || getTeam().getKnowledge(playerUUID.get()).contains(persistentInfo);
         }
-        return getTeam().getKnowledge(playerUUID.get()).contains(NBTManager.getPersistentInfo(info));
+        return getTeam().getKnowledge(playerUUID.get()).contains(ComponentProcessorHelper.instance().getPersistentInfo(info));
     }
 
     @Override
@@ -116,9 +117,9 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
             // Note: We ignore the tome here being a separate entity because it should not have any persistent info
             return tryAdd(persistentInfo);
         }
-        if (info.getItem() instanceof Tome) {
-            if (info.hasNBT()) {
-                //Make sure we don't have any NBT as it doesn't have any effect for the tome
+        if (info.getItem().value() instanceof Tome) {
+            if (info.hasModifiedComponents()) {
+                //Make sure we don't have any extra components as it doesn't have any effect for the tome
                 info = ItemInfo.fromItem(info.getItem());
             }
             //Note: We don't bother checking if we already somehow know the tome without having full knowledge
@@ -129,7 +130,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
             fireChangedEvent();
             return true;
         }
-        return tryAdd(NBTManager.getPersistentInfo(info));
+        return tryAdd(ComponentProcessorHelper.instance().getPersistentInfo(info));
     }
 
     private boolean tryAdd(@NotNull ItemInfo cleanedInfo) {
@@ -143,10 +144,10 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
     @Override
     public boolean removeKnowledge(@NotNull ItemInfo info) {
         if (getTeam().hasFullKnowledge(playerUUID.get())) {
-            if (info.getItem() instanceof Tome) {
+            if (info.getItem().value() instanceof Tome) {
                 //If we have full knowledge and are trying to remove the tome allow it
-                if (info.hasNBT()) {
-                    //Make sure we don't have any NBT as it doesn't have any effect for the tome
+                if (info.hasModifiedComponents()) {
+                    //Make sure we don't have any extra components as it doesn't have any effect for the tome
                     info = ItemInfo.fromItem(info.getItem());
                 }
                 getTeam().removeKnowledge(info, playerUUID.get());
@@ -159,7 +160,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
             ItemInfo persistentInfo = getIfPersistent(info);
             return persistentInfo != null && tryRemove(persistentInfo);
         }
-        return tryRemove(NBTManager.getPersistentInfo(info));
+        return tryRemove(ComponentProcessorHelper.instance().getPersistentInfo(info));
     }
 
     private boolean tryRemove(@NotNull ItemInfo cleanedInfo) {
@@ -184,7 +185,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
 
     @NotNull
     @Override
-    public IItemHandlerModifiable getInputAndLocks() {
+    public IItemHandler getInputAndLocks() {
         return inputLocks;
     }
 
@@ -200,29 +201,33 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
 
     @Override
     public void sync(@NotNull ServerPlayer player) {
-        if (!getTeam().isSharingEMC() && !getTeam().isSharingKnowledge())
-            sendKnowledgeSync(player);
-        else
+        KnowledgeSyncPKT syncPacket = new KnowledgeSyncPKT(serializeForClient());
+        if (!getTeam().isSharingEMC() && !getTeam().isSharingKnowledge()) {
+            PacketDistributor.sendToPlayer(player, syncPacket);
+        } else {
             TeamProjectE.getOnlineTeamMembers(TeamProjectE.getPlayerUUID(player))
-                    .forEach(TeamKnowledgeProvider::sendKnowledgeSync);
+                    .forEach(p -> PacketDistributor.sendToPlayer(p, syncPacket));
+        }
     }
 
-    private static void sendKnowledgeSync(ServerPlayer player) {
-        player.getCapability(PECapabilities.KNOWLEDGE_CAPABILITY)
-                .ifPresent(cap -> PacketHandler.sendTo(new KnowledgeSyncPKT(((TeamKnowledgeProvider) cap).serializeForClient()), player));
-    }
+    private KnowledgeAttachment serializeForClient() {
+        KnowledgeAttachment attachment = new KnowledgeImpl.KnowledgeAttachment();
+        KnowledgeAttachmentAccessor accessor = (KnowledgeAttachmentAccessor) (Object) attachment;
 
-    private CompoundTag serializeForClient() {
-        CompoundTag properties = new CompoundTag();
-        properties.putString("transmutationEmc", getTeam().getEmc(playerUUID.get()).toString());
-        ListTag knowledgeWrite = new ListTag();
-        for (ItemInfo i : getTeam().getKnowledge(playerUUID.get()))
-            knowledgeWrite.add(i.write(new CompoundTag()));
+        accessor.teamprojecte$setEmc(getTeam().getEmc(playerUUID.get()));
+        accessor.teamprojecte$setFullKnowledge(getTeam().hasFullKnowledge(playerUUID.get()));
 
-        properties.put("knowledge", knowledgeWrite);
-        properties.put("inputlock", this.inputLocks.serializeNBT());
-        properties.putBoolean("fullknowledge", getTeam().hasFullKnowledge(playerUUID.get()));
-        return properties;
+        Set<ItemInfo> knowledge = accessor.teamprojecte$getKnowledge();
+        knowledge.clear();
+        knowledge.addAll(getTeam().getKnowledge(playerUUID.get()));
+
+        ItemStackHandler locks = accessor.teamprojecte$getInputLocks();
+        int slots = Math.min(locks.getSlots(), inputLocks.getSlots());
+        for (int i = 0; i < slots; i++) {
+            locks.setStackInSlot(i, inputLocks.getStackInSlot(i));
+        }
+
+        return attachment;
     }
 
 
@@ -241,7 +246,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
     public void syncInputAndLocks(@NotNull ServerPlayer serverPlayer, IntList intList, TargetUpdateType targetUpdateType) {
         if (!intList.isEmpty()) {
             int slots = inputLocks.getSlots();
-            Map<Integer, ItemStack> stacksToSync = new HashMap<>();
+            Int2ObjectMap<ItemStack> stacksToSync = new Int2ObjectOpenHashMap<>();
             for (int slot : intList) {
                 if (slot >= 0 && slot < slots) {
                     //Validate the slot is a valid index
@@ -250,7 +255,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
             }
             if (!stacksToSync.isEmpty()) {
                 //Validate it is not empty in case we were fed bad indices
-                PacketHandler.sendTo(new KnowledgeSyncInputsAndLocksPKT(stacksToSync, targetUpdateType), serverPlayer);
+                PacketDistributor.sendToPlayer(serverPlayer, new KnowledgeSyncInputsAndLocksPKT(stacksToSync, targetUpdateType));
             }
         }
     }
@@ -267,12 +272,13 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
         });
     }
 
-    private static void sendPacket(IPEPacket packet, ServerPlayer player, boolean team) {
-        if (team)
+    private static void sendPacket(net.minecraft.network.protocol.common.custom.CustomPacketPayload packet, ServerPlayer player, boolean team) {
+        if (team) {
             TeamProjectE.getOnlineTeamMembers(TeamProjectE.getPlayerUUID(player))
-                    .forEach(p -> PacketHandler.sendTo(packet, p));
-        else
-            PacketHandler.sendTo(packet, player);
+                    .forEach(p -> PacketDistributor.sendToPlayer(p, packet));
+        } else {
+            PacketDistributor.sendToPlayer(player, packet);
+        }
     }
 
 }

@@ -2,10 +2,9 @@
   "required": true,
   "minVersion": "0.8",
   "package": "cn.leomc.teamprojecte.mixin",
-  "refmap": "teamprojecte.refmap.json",
   "mixins": [
-    "KnowledgeEventsProviderMixin",
-    "TransmutationOfflineMixin"
+    "KnowledgeAttachmentAccessor",
+    "PECoreKnowledgeCapabilityMixin"
   ],
   "client": [
   ],

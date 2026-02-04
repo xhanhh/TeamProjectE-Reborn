@@ -13,6 +13,10 @@ credits = "${mod_credits}"
 description = '''
 ProjectE knowledge and EMC syncing!
 '''
+
+[[mixins]]
+config="${mod_id}.mixins.json"
+
 [[dependencies.teamprojecte]]
 modId = "neoforge"
 mandatory = true

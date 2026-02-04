@@ -15,11 +15,12 @@ import java.util.UUID;
 public class TPSavedData extends SavedData {
 
     private static TPSavedData DATA;
+    private static final SavedData.Factory<TPSavedData> FACTORY = new SavedData.Factory<>(TPSavedData::new, TPSavedData::new);
 
     static TPSavedData getData() {
         if (DATA == null && ServerLifecycleHooks.getCurrentServer() != null)
             DATA = ServerLifecycleHooks.getCurrentServer().overworld().getDataStorage()
-                    .computeIfAbsent(TPSavedData::new, TPSavedData::new, "teamprojecte");
+                    .computeIfAbsent(FACTORY, "teamprojecte");
         return DATA;
     }
 
@@ -53,7 +54,7 @@ public class TPSavedData extends SavedData {
         return compoundTag;
     }
 
-    TPSavedData(CompoundTag tag) {
+    TPSavedData(CompoundTag tag, HolderLookup.Provider provider) {
         TeamProjectE.LOGGER.debug(tag.toString());
         String version = tag.getString("version");
         for (Tag t : tag.getList("teams", Tag.TAG_COMPOUND)) {
