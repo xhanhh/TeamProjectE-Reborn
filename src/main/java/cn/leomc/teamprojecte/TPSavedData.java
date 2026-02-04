@@ -1,10 +1,11 @@
 package cn.leomc.teamprojecte;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.saveddata.SavedData;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -36,6 +37,22 @@ public class TPSavedData extends SavedData {
     TPSavedData() {
     }
 
+    @NotNull
+    @Override
+    public CompoundTag save(CompoundTag compoundTag, HolderLookup.@NotNull Provider provider) {
+        compoundTag.putString("version", "1");
+
+        ListTag teams = new ListTag();
+        this.teams.forEach((uuid, team) -> {
+            CompoundTag t = new CompoundTag();
+            t.putUUID("uuid", uuid);
+            t.put("team", team.save());
+            teams.add(t);
+        });
+        compoundTag.put("teams", teams);
+        return compoundTag;
+    }
+
     TPSavedData(CompoundTag tag) {
         TeamProjectE.LOGGER.debug(tag.toString());
         String version = tag.getString("version");
@@ -45,18 +62,4 @@ public class TPSavedData extends SavedData {
         }
     }
 
-    @Override
-    public @NotNull CompoundTag save(CompoundTag tag) {
-        tag.putString("version", "1");
-
-        ListTag teams = new ListTag();
-        this.teams.forEach((uuid, team) -> {
-            CompoundTag t = new CompoundTag();
-            t.putUUID("uuid", uuid);
-            t.put("team", team.save());
-            teams.add(t);
-        });
-        tag.put("teams", teams);
-        return tag;
-    }
 }

@@ -1,21 +1,10 @@
 package cn.leomc.teamprojecte;
 
-import net.minecraftforge.eventbus.api.Event;
+import net.neoforged.bus.api.Event;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-/**
- * Fired on the server when either:
- * <ul>
- *     <li>A player leaves or joins a team</li>
- *     <li>A team has changed its owner or whether it is sharing EMC or knowledge</li>
- * </ul>
- * In the latter case, the values for a player UUID and new team will be {@code null}.
- * <p>
- * This event is fired on {@link net.minecraftforge.common.MinecraftForge#EVENT_BUS}. It is not
- * {@link net.minecraftforge.eventbus.api.Cancelable}, and has no result.
- */
 public class TeamChangeEvent extends Event {
     @Nullable
     private final UUID playerUUID;

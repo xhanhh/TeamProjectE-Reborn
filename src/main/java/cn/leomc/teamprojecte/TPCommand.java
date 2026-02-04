@@ -19,9 +19,9 @@ import net.minecraft.network.chat.*;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.UsernameCache;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.common.UsernameCache;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -171,7 +171,7 @@ public class TPCommand {
                         .withStyle(ChatFormatting.GREEN)
                         .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("commands.teamprojecte.members.member_online"))));
             else if (UsernameCache.containsUUID(uuid))
-                component = Component.literal(UsernameCache.getLastKnownUsername(uuid))
+                component = Component.literal(Objects.requireNonNull(UsernameCache.getLastKnownUsername(uuid)))
                         .withStyle(ChatFormatting.RED)
                         .withStyle(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("commands.teamprojecte.members.member_offline"))));
             else
@@ -358,7 +358,7 @@ public class TPCommand {
     }
 
     private static void postTeamMemberChangeEvent(UUID playerUUID, TPTeam oldTeam, TPTeam newTeam) {
-        MinecraftForge.EVENT_BUS.post(new TeamChangeEvent(playerUUID, oldTeam, newTeam));
+        NeoForge.EVENT_BUS.post(new TeamChangeEvent(playerUUID, oldTeam, newTeam));
     }
 
     private static void postTeamAttributeChangeEvent(TPTeam team) {

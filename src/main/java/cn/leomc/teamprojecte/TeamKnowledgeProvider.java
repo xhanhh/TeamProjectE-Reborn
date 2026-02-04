@@ -1,6 +1,8 @@
 package cn.leomc.teamprojecte;
 
 import com.google.common.base.Suppliers;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.IntList;
 import moze_intel.projecte.api.ItemInfo;
 import moze_intel.projecte.api.capabilities.IKnowledgeProvider;
 import moze_intel.projecte.api.capabilities.PECapabilities;
@@ -18,9 +20,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemStackHandler;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
 
     private void fireChangedEvent() {
         getTeam().getAll()
-                .forEach(uuid -> MinecraftForge.EVENT_BUS.post(new PlayerKnowledgeChangeEvent(uuid)));
+                .forEach(uuid -> NeoForge.EVENT_BUS.post(new PlayerKnowledgeChangeEvent(uuid)));
     }
 
     private TPTeam getTeam() {
@@ -236,6 +237,36 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
         sendPacket(new KnowledgeSyncChangePKT(change, learned), player, getTeam().isSharingKnowledge());
     }
 
+    @Override
+    public void syncInputAndLocks(@NotNull ServerPlayer serverPlayer, IntList intList, TargetUpdateType targetUpdateType) {
+        if (!intList.isEmpty()) {
+            int slots = inputLocks.getSlots();
+            Map<Integer, ItemStack> stacksToSync = new HashMap<>();
+            for (int slot : intList) {
+                if (slot >= 0 && slot < slots) {
+                    //Validate the slot is a valid index
+                    stacksToSync.put(slot, inputLocks.getStackInSlot(slot));
+                }
+            }
+            if (!stacksToSync.isEmpty()) {
+                //Validate it is not empty in case we were fed bad indices
+                PacketHandler.sendTo(new KnowledgeSyncInputsAndLocksPKT(stacksToSync, targetUpdateType), serverPlayer);
+            }
+        }
+    }
+
+    @Override
+    public void receiveInputsAndLocks(Int2ObjectMap<ItemStack> int2ObjectMap) {
+        int slots = inputLocks.getSlots();
+        int2ObjectMap.forEach((key, value) -> {
+            int slot = key;
+            if (slot >= 0 && slot < slots) {
+                //Validate the slot is a valid index
+                inputLocks.setStackInSlot(slot, value);
+            }
+        });
+    }
+
     private static void sendPacket(IPEPacket packet, ServerPlayer player, boolean team) {
         if (team)
             TeamProjectE.getOnlineTeamMembers(TeamProjectE.getPlayerUUID(player))
@@ -244,48 +275,4 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
             PacketHandler.sendTo(packet, player);
     }
 
-    @Override
-    public void syncInputAndLocks(@NotNull ServerPlayer player, List<Integer> slotsChanged, TargetUpdateType updateTargets) {
-        if (!slotsChanged.isEmpty()) {
-            int slots = inputLocks.getSlots();
-            Map<Integer, ItemStack> stacksToSync = new HashMap<>();
-            for (int slot : slotsChanged) {
-                if (slot >= 0 && slot < slots) {
-                    //Validate the slot is a valid index
-                    stacksToSync.put(slot, inputLocks.getStackInSlot(slot));
-                }
-            }
-            if (!stacksToSync.isEmpty()) {
-                //Validate it is not empty in case we were fed bad indices
-                PacketHandler.sendTo(new KnowledgeSyncInputsAndLocksPKT(stacksToSync, updateTargets), player);
-            }
-        }
-    }
-
-    @Override
-    public void receiveInputsAndLocks(Map<Integer, ItemStack> changes) {
-        int slots = inputLocks.getSlots();
-        for (Map.Entry<Integer, ItemStack> entry : changes.entrySet()) {
-            int slot = entry.getKey();
-            if (slot >= 0 && slot < slots) {
-                //Validate the slot is a valid index
-                inputLocks.setStackInSlot(slot, entry.getValue());
-            }
-        }
-    }
-
-    @Override
-    public CompoundTag serializeNBT() {
-        CompoundTag properties = new CompoundTag();
-        properties.put("inputlock", inputLocks.serializeNBT());
-        return properties;
-    }
-
-    @Override
-    public void deserializeNBT(CompoundTag properties) {
-        for (int i = 0; i < inputLocks.getSlots(); i++) {
-            inputLocks.setStackInSlot(i, ItemStack.EMPTY);
-        }
-        inputLocks.deserializeNBT(properties.getCompound("inputlock"));
-    }
 }
