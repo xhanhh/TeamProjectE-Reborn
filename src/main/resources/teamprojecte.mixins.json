@@ -8,6 +8,7 @@
     "pe.PECoreKnowledgeCapabilityMixin"
   ],
   "client": [
+    "xaero.XaeroDisplayMixin"
   ],
   "injectors": {
     "defaultRequire": 1

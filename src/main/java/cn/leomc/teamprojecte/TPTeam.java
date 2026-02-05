@@ -1,6 +1,7 @@
 package cn.leomc.teamprojecte;
 
 import com.google.common.collect.Lists;
+import lombok.Getter;
 import moze_intel.projecte.api.ItemInfo;
 import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;
@@ -15,6 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class TPTeam {
     private final UUID teamUUID;
+    @Getter
     private UUID owner;
     private final List<UUID> members;
 
@@ -61,37 +63,30 @@ public class TPTeam {
         return teamUUID;
     }
 
-    public UUID getOwner() {
-        return owner;
-    }
-
     public void addMemberWithKnowledge(TPTeam originalTeam, Player player) {
         markDirty();
-        UUID playerUUID = TeamProjectE.getPlayerUUID(player);
+        UUID playerUUID = TeamProjectEMod.getPlayerUUID(player);
         addMember(playerUUID);
 
-        if (originalTeam.getOwner().equals(playerUUID)) {
-            setEmc(getEmc(playerUUID).add(originalTeam.getEmc(playerUUID)), playerUUID);
+        if (!originalTeam.isSharingEMC()) {
+            BigInteger emcToTransfer = originalTeam.getEmc(playerUUID);
+            if (emcToTransfer.signum() != 0) {
+                if (isSharingEMC()) {
+                    setEmc(getEmc(playerUUID).add(emcToTransfer), playerUUID);
+                } else {
+                    setEmc(emcToTransfer, playerUUID);
+                }
+            }
             originalTeam.setEmc(BigInteger.ZERO, playerUUID);
+        }
+
+        if (!originalTeam.isSharingKnowledge()) {
             if (originalTeam.hasFullKnowledge(playerUUID)) {
                 setFullKnowledge(true, playerUUID);
                 originalTeam.setFullKnowledge(false, playerUUID);
             }
             originalTeam.getKnowledge(playerUUID).forEach(k -> addKnowledge(k, playerUUID));
             originalTeam.clearKnowledge(playerUUID);
-        } else {
-            if (!originalTeam.isSharingEMC()) {
-                setEmc(originalTeam.getEmc(playerUUID), playerUUID);
-                originalTeam.setEmc(BigInteger.ZERO, playerUUID);
-            }
-            if (!originalTeam.isSharingKnowledge()) {
-                if (originalTeam.hasFullKnowledge(playerUUID)) {
-                    setFullKnowledge(true, playerUUID);
-                    originalTeam.setFullKnowledge(false, playerUUID);
-                }
-                originalTeam.getKnowledge(playerUUID).forEach(k -> addKnowledge(k, playerUUID));
-                originalTeam.clearKnowledge(playerUUID);
-            }
         }
         originalTeam.removeMember(playerUUID);
         sync();
@@ -265,11 +260,11 @@ public class TPTeam {
     }
 
     public void sync() {
-        TeamProjectE.getAllOnline(getAll()).forEach(TeamProjectE::sync);
+        TeamProjectEMod.getAllOnline(getAll()).forEach(TeamProjectEMod::sync);
     }
 
     public void sync(UUID uuid) {
-        TeamProjectE.getAllOnline(List.of(uuid)).forEach(TeamProjectE::sync);
+        TeamProjectEMod.getAllOnline(List.of(uuid)).forEach(TeamProjectEMod::sync);
     }
 
 }

@@ -17,6 +17,7 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 
 import cn.leomc.teamprojecte.mixin.pe.KnowledgeAttachmentAccessor;
+import cn.leomc.teamprojecte.mixin.TPMixinPlugin;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
@@ -24,15 +25,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-@Mod(TeamProjectE.MOD_ID)
-public class TeamProjectE {
+@Mod(TeamProjectEMod.MOD_ID)
+public class TeamProjectEMod {
 
     public static final String MOD_ID = "teamprojecte";
 
     public static final Logger LOGGER = LoggerFactory.getLogger("Team ProjectE");
 
-    public TeamProjectE() {
+    public static TPConfig CONFIG = new TPConfig();
+
+    public TeamProjectEMod() {
         NeoForge.EVENT_BUS.register(this);
+        CONFIG = TPConfig.loadConfig();
+        TPMixinPlugin.CONFIG = CONFIG;
     }
 
     @SubscribeEvent
@@ -135,7 +140,7 @@ public class TeamProjectE {
 
     public static List<ServerPlayer> getOnlineTeamMembers(UUID uuid, boolean includeOwner) {
         TPTeam team = TPTeam.getOrCreateTeam(uuid);
-        return TeamProjectE.getAllOnline(includeOwner ? team.getAll() : team.getMembers());
+        return TeamProjectEMod.getAllOnline(includeOwner ? team.getAll() : team.getMembers());
     }
 
     public static UUID getPlayerUUID(Player player) {

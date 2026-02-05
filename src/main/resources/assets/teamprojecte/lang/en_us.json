@@ -29,5 +29,16 @@
   "commands.teamprojecte.settings.set.sharing_emc.false": "Set EMC sharing to false",
   "commands.teamprojecte.settings.set.sharing_emc.true": "Set EMC sharing to true",
   "commands.teamprojecte.settings.set.sharing_knowledge.false": "Set knowledge sharing to false",
-  "commands.teamprojecte.settings.set.sharing_knowledge.true": "Set knowledge sharing to true"
+  "commands.teamprojecte.settings.set.sharing_knowledge.true": "Set knowledge sharing to true",
+
+  "xaerominimap.teamprojecte.infodisplay.pe_emc": "ProjectE Team EMC",
+
+  "config.teamprojecte.title": "Team ProjectE Config",
+  "config.teamprojecte.client": "Client",
+  "config.teamprojecte.enable_xaerominimap_emc_display": "Display Team/Person EMC in Xaero's Minimap",
+  "config.teamprojecte.enable_xaerominimap_emc_display.tooltip": "Display info manage in Xaero's Minimap can also be turned on and off without restarting the display, but this option takes precedence. Individuals are displayed when there are no teams and teams are displayed when there are teams.",
+  "config.teamprojecte.enable_xaerominimap_emc_display_hold_shift_show_full": "Expand to show the EMC number when Shift is pressed",
+  "config.teamprojecte.enable_xaerominimap_emc_display_hold_shift_show_full.tooltip": "Normal: 132.22E, enable this option while pressing shift: 111, 111, 111",
+  "config.teamprojecte.enable_xaerominimap_emc_display_rate": "Display Team/Person EMC change rate",
+  "config.teamprojecte.enable_xaerominimap_emc_display_rate.tooltip": "Hint when the EMC changes within the team."
 }

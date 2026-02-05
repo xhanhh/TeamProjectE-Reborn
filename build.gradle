@@ -117,6 +117,9 @@ repositories {
     }
     maven { url = "https://api.modrinth.com/maven" }
     maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    maven {
+        url = "https://chocolateminecraft.com/maven"
+    }
     mavenCentral()
 }
 
@@ -132,7 +135,8 @@ dependencies {
     api "curse.maven:projecte-226410:${pe_curse_version}"
 
     api "me.shedaniel.cloth:cloth-config-neoforge:${cloth_version}"
-    api "maven.modrinth:xaeros-minimap:${xaero_minimap_version}"
+    api "xaero.minimap:xaerominimap-neoforge-1.21.1:${xaero_minimap_version}"
+    compileOnly "xaero.lib:xaerolib-neoforge-1.21.1:${xaero_lib_version}"
 
     runtimeOnly "curse.maven:catalogue-459701:${catalogue_curse_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"

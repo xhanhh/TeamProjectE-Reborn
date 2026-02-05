@@ -23,7 +23,7 @@ public class TPSavedData extends SavedData {
     static TPSavedData getData() {
         if (DATA == null && ServerLifecycleHooks.getCurrentServer() != null)
             DATA = ServerLifecycleHooks.getCurrentServer().overworld().getDataStorage()
-                    .computeIfAbsent(FACTORY, TeamProjectE.MOD_ID);
+                    .computeIfAbsent(FACTORY, TeamProjectEMod.MOD_ID);
         return DATA;
     }
 
@@ -74,7 +74,7 @@ public class TPSavedData extends SavedData {
     }
 
     TPSavedData(CompoundTag tag, HolderLookup.Provider provider) {
-        TeamProjectE.LOGGER.debug(tag.toString());
+        TeamProjectEMod.LOGGER.debug(tag.toString());
         String version = tag.getString("version");
         for (Tag t : tag.getList("teams", Tag.TAG_COMPOUND)) {
             CompoundTag team = (CompoundTag) t;

@@ -37,7 +37,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
     private final ItemStackHandler inputLocks = new ItemStackHandler(9);
 
     public TeamKnowledgeProvider(@NotNull ServerPlayer player) {
-        this.playerUUID = Suppliers.memoize(() -> TeamProjectE.getPlayerUUID(player));
+        this.playerUUID = Suppliers.memoize(() -> TeamProjectEMod.getPlayerUUID(player));
     }
 
     public TeamKnowledgeProvider(UUID uuid) {
@@ -45,7 +45,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
     }
 
     private void fireChangedEvent() {
-        TeamProjectE.getAllOnline(getTeam().getAll())
+        TeamProjectEMod.getAllOnline(getTeam().getAll())
                 .forEach(player -> NeoForge.EVENT_BUS.post(new PlayerKnowledgeChangeEvent(player)));
     }
 
@@ -205,7 +205,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
         if (!getTeam().isSharingEMC() && !getTeam().isSharingKnowledge()) {
             PacketDistributor.sendToPlayer(player, syncPacket);
         } else {
-            TeamProjectE.getOnlineTeamMembers(TeamProjectE.getPlayerUUID(player))
+            TeamProjectEMod.getOnlineTeamMembers(TeamProjectEMod.getPlayerUUID(player))
                     .forEach(p -> PacketDistributor.sendToPlayer(p, syncPacket));
         }
     }
@@ -274,7 +274,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
 
     private static void sendPacket(net.minecraft.network.protocol.common.custom.CustomPacketPayload packet, ServerPlayer player, boolean team) {
         if (team) {
-            TeamProjectE.getOnlineTeamMembers(TeamProjectE.getPlayerUUID(player))
+            TeamProjectEMod.getOnlineTeamMembers(TeamProjectEMod.getPlayerUUID(player))
                     .forEach(p -> PacketDistributor.sendToPlayer(p, packet));
         } else {
             PacketDistributor.sendToPlayer(player, packet);

@@ -82,8 +82,8 @@ public class TPCommand {
 
     private static boolean requiresInTeam(CommandSourceStack stack) {
         if (stack.getEntity() instanceof ServerPlayer player) {
-            TPTeam team = TPTeam.getTeamByMember(TeamProjectE.getPlayerUUID(player));
-            return team != null && (!team.getOwner().equals(TeamProjectE.getPlayerUUID(player)) || !team.getMembers().isEmpty());
+            TPTeam team = TPTeam.getTeamByMember(TeamProjectEMod.getPlayerUUID(player));
+            return team != null && (!team.getOwner().equals(TeamProjectEMod.getPlayerUUID(player)) || !team.getMembers().isEmpty());
         }
         return false;
     }
@@ -92,8 +92,8 @@ public class TPCommand {
         if (!requiresInTeam(stack))
             return false;
         if (stack.getEntity() instanceof ServerPlayer player) {
-            TPTeam team = TPTeam.getTeamByMember(TeamProjectE.getPlayerUUID(player));
-            return team != null && TeamProjectE.getPlayerUUID(player).equals(team.getOwner());
+            TPTeam team = TPTeam.getTeamByMember(TeamProjectEMod.getPlayerUUID(player));
+            return team != null && TeamProjectEMod.getPlayerUUID(player).equals(team.getOwner());
         }
         return false;
     }
@@ -106,7 +106,7 @@ public class TPCommand {
             return 0;
 
         ServerPlayer newOwner = EntityArgument.getPlayer(context, "member");
-        UUID newOwnerUUID = TeamProjectE.getPlayerUUID(newOwner);
+        UUID newOwnerUUID = TeamProjectEMod.getPlayerUUID(newOwner);
 
         if (!team.getAll().contains(newOwnerUUID)) {
             context.getSource().sendFailure(Component.translatable("commands.teamprojecte.transfer_ownership.not_in_team"));
@@ -132,12 +132,12 @@ public class TPCommand {
             return 0;
 
         List<ServerPlayer> kick = EntityArgument.getPlayers(context, "members").stream()
-                .filter(p -> team.getMembers().contains(TeamProjectE.getPlayerUUID(p)))
+                .filter(p -> team.getMembers().contains(TeamProjectEMod.getPlayerUUID(p)))
                 .toList();
         kick.forEach(p -> {
-            team.removeMember(TeamProjectE.getPlayerUUID(p));
+            team.removeMember(TeamProjectEMod.getPlayerUUID(p));
             p.sendSystemMessage(Component.translatable("commands.teamprojecte.kicked").withStyle(ChatFormatting.RED));
-            UUID uuid = TeamProjectE.getPlayerUUID(p);
+            UUID uuid = TeamProjectEMod.getPlayerUUID(p);
             postTeamMemberChangeEvent(uuid, team, null);
         });
 
@@ -197,7 +197,7 @@ public class TPCommand {
         if (team == null)
             return 0;
 
-        UUID uuid = TeamProjectE.getPlayerUUID(player);
+        UUID uuid = TeamProjectEMod.getPlayerUUID(player);
         team.removeMember(uuid);
         postTeamMemberChangeEvent(uuid, team, null);
         return Command.SINGLE_SUCCESS;
@@ -206,27 +206,27 @@ public class TPCommand {
     private static int accept(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = checkPlayer(context);
         UUID uuid = UuidArgument.getUuid(context, "team");
-        if (!INVITATIONS.get(TeamProjectE.getPlayerUUID(player)).contains(uuid)) {
+        if (!INVITATIONS.get(TeamProjectEMod.getPlayerUUID(player)).contains(uuid)) {
             context.getSource().sendFailure(Component.translatable("commands.teamprojecte.invitation.not_found"));
             return -1;
         }
 
-        INVITATIONS.remove(TeamProjectE.getPlayerUUID(player), uuid);
+        INVITATIONS.remove(TeamProjectEMod.getPlayerUUID(player), uuid);
 
         TPTeam team = TPTeam.getTeam(uuid);
         if (team == null) {
             context.getSource().sendFailure(Component.translatable("commands.teamprojecte.team_not_found"));
             return -1;
         }
-        TPTeam originalTeam = TPTeam.getTeamByMember(TeamProjectE.getPlayerUUID(player));
+        TPTeam originalTeam = TPTeam.getTeamByMember(TeamProjectEMod.getPlayerUUID(player));
         if (originalTeam != null)
             team.addMemberWithKnowledge(originalTeam, player);
         else
-            team.addMember(TeamProjectE.getPlayerUUID(player));
+            team.addMember(TeamProjectEMod.getPlayerUUID(player));
 
         context.getSource().sendSuccess(() -> Component.translatable("commands.teamprojecte.invite.accepted").withStyle(ChatFormatting.GREEN), false);
         Component component = Component.translatable("commands.teamprojecte.joined_team", player.getDisplayName()).withStyle(ChatFormatting.GREEN);
-        TeamProjectE.getAllOnline(team.getAll()).forEach(p -> p.sendSystemMessage(component));
+        TeamProjectEMod.getAllOnline(team.getAll()).forEach(p -> p.sendSystemMessage(component));
         postTeamMemberChangeEvent(uuid, originalTeam, team);
 
         return Command.SINGLE_SUCCESS;
@@ -236,12 +236,12 @@ public class TPCommand {
     private static int decline(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = checkPlayer(context);
         UUID uuid = UuidArgument.getUuid(context, "team");
-        if (!INVITATIONS.get(TeamProjectE.getPlayerUUID(player)).contains(uuid)) {
+        if (!INVITATIONS.get(TeamProjectEMod.getPlayerUUID(player)).contains(uuid)) {
             context.getSource().sendFailure(Component.translatable("commands.teamprojecte.invitation.not_found"));
             return -1;
         }
 
-        INVITATIONS.remove(TeamProjectE.getPlayerUUID(player), uuid);
+        INVITATIONS.remove(TeamProjectEMod.getPlayerUUID(player), uuid);
 
         TPTeam team = TPTeam.getTeam(uuid);
         if (team == null) {
@@ -250,7 +250,7 @@ public class TPCommand {
         }
 
         player.sendSystemMessage(Component.translatable("commands.teamprojecte.invite.declined").withStyle(ChatFormatting.RED));
-        TeamProjectE.getAllOnline(Collections.singletonList(team.getOwner())).forEach(p ->
+        TeamProjectEMod.getAllOnline(Collections.singletonList(team.getOwner())).forEach(p ->
                 p.sendSystemMessage(Component.translatable("commands.teamprojecte.invitation.declined", player.getDisplayName())));
 
         return Command.SINGLE_SUCCESS;
@@ -258,17 +258,17 @@ public class TPCommand {
 
     private static CompletableFuture<Suggestions> createSuggestionsForInvitation(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         Player player = checkPlayer(context);
-        return SharedSuggestionProvider.suggest(INVITATIONS.get(TeamProjectE.getPlayerUUID(player)).stream().map(UUID::toString), builder);
+        return SharedSuggestionProvider.suggest(INVITATIONS.get(TeamProjectEMod.getPlayerUUID(player)).stream().map(UUID::toString), builder);
     }
 
     private static int invite(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         Player player = checkPlayer(context);
-        TPTeam team = TPTeam.getOrCreateTeam(TeamProjectE.getPlayerUUID(player));
+        TPTeam team = TPTeam.getOrCreateTeam(TeamProjectEMod.getPlayerUUID(player));
 
 
         Collection<ServerPlayer> players =
                 EntityArgument.getPlayers(context, "players").stream()
-                        .filter(p -> !team.getAll().contains(TeamProjectE.getPlayerUUID(p)))
+                        .filter(p -> !team.getAll().contains(TeamProjectEMod.getPlayerUUID(p)))
                         .toList();
 
         Component component = Component.translatable("commands.teamprojecte.invitation",
@@ -282,7 +282,7 @@ public class TPCommand {
         );
 
         for (ServerPlayer p : players) {
-            INVITATIONS.put(TeamProjectE.getPlayerUUID(p), team.getUUID());
+            INVITATIONS.put(TeamProjectEMod.getPlayerUUID(p), team.getUUID());
             p.sendSystemMessage(component);
         }
         if (!players.isEmpty())
@@ -299,8 +299,8 @@ public class TPCommand {
     }
 
     private static TPTeam checkInTeam(Player player) {
-        TPTeam team = TPTeam.getTeamByMember(TeamProjectE.getPlayerUUID(player));
-        if (team == null || (team.getOwner().equals(TeamProjectE.getPlayerUUID(player)) && team.getMembers().isEmpty())) {
+        TPTeam team = TPTeam.getTeamByMember(TeamProjectEMod.getPlayerUUID(player));
+        if (team == null || (team.getOwner().equals(TeamProjectEMod.getPlayerUUID(player)) && team.getMembers().isEmpty())) {
             player.sendSystemMessage(Component.translatable("commands.teamprojecte.leave.not_in_team").withStyle(ChatFormatting.RED));
             return null;
         }
@@ -308,7 +308,7 @@ public class TPCommand {
     }
 
     private static boolean checkOwner(TPTeam team, ServerPlayer player) {
-        if (!TeamProjectE.getPlayerUUID(player).equals(team.getOwner())) {
+        if (!TeamProjectEMod.getPlayerUUID(player).equals(team.getOwner())) {
             player.sendSystemMessage(Component.translatable("commands.teamprojecte.not_owner").withStyle(ChatFormatting.RED));
             return false;
         }
