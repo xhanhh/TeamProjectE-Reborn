@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "top.ilov.mcmods.teamprojecte.mixin",
+  "plugin": "top.ilov.mcmods.teamprojecte.mixin.TPRMixinPlugin",
+  "mixins": [
+    "pe.KnowledgeAttachmentAccessor",
+    "pe.PECoreKnowledgeCapabilityMixin"
+  ],
+  "client": [
+    "xaero.XaeroDisplayMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
