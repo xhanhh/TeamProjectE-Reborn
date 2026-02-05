@@ -1,7 +1,7 @@
 package cn.leomc.teamprojecte;
 
 import com.google.common.base.Suppliers;
-import cn.leomc.teamprojecte.mixin.KnowledgeAttachmentAccessor;
+import cn.leomc.teamprojecte.mixin.pe.KnowledgeAttachmentAccessor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;

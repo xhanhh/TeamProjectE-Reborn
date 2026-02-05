@@ -1,8 +1,7 @@
-package cn.leomc.teamprojecte.mixin;
+package cn.leomc.teamprojecte.mixin.pe;
 
 import cn.leomc.teamprojecte.TeamKnowledgeProvider;
 import moze_intel.projecte.PECore;
-import moze_intel.projecte.api.capabilities.IKnowledgeProvider;
 import moze_intel.projecte.api.capabilities.PECapabilities;
 import moze_intel.projecte.impl.capability.KnowledgeImpl;
 import net.minecraft.server.level.ServerPlayer;

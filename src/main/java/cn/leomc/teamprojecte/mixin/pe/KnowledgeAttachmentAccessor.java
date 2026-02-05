@@ -1,4 +1,4 @@
-package cn.leomc.teamprojecte.mixin;
+package cn.leomc.teamprojecte.mixin.pe;
 
 import moze_intel.projecte.api.ItemInfo;
 import moze_intel.projecte.impl.capability.KnowledgeImpl;

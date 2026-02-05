@@ -1,6 +1,5 @@
 package cn.leomc.teamprojecte;
 
-import com.mojang.logging.LogUtils;
 import moze_intel.projecte.api.capabilities.PECapabilities;
 import moze_intel.projecte.api.capabilities.IKnowledgeProvider;
 import moze_intel.projecte.gameObjs.registries.PEAttachmentTypes;
@@ -17,17 +16,20 @@ import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.slf4j.Logger;
 
-import cn.leomc.teamprojecte.mixin.KnowledgeAttachmentAccessor;
+import cn.leomc.teamprojecte.mixin.pe.KnowledgeAttachmentAccessor;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-@Mod("teamprojecte")
+@Mod(TeamProjectE.MOD_ID)
 public class TeamProjectE {
 
-    public static final Logger LOGGER = LogUtils.getLogger();
+    public static final String MOD_ID = "teamprojecte";
+
+    public static final Logger LOGGER = LoggerFactory.getLogger("Team ProjectE");
 
     public TeamProjectE() {
         NeoForge.EVENT_BUS.register(this);
@@ -46,7 +48,8 @@ public class TeamProjectE {
 
     @SubscribeEvent
     public void onPlayerJoin(EntityJoinLevelEvent event) {
-        if (event.getLevel().dimension() == Level.OVERWORLD && event.getEntity() instanceof ServerPlayer player) {
+        if (event.getLevel().dimension() == Level.OVERWORLD
+                && event.getEntity() instanceof ServerPlayer player) {
             migrateProjectEDataIfNeeded(player);
             sync(player);
         }

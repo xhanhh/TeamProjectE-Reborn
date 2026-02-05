@@ -161,11 +161,17 @@ public class TPCommand {
 
     private static Component getNames(UUID owner, List<UUID> uuids) {
         List<Component> components = new ArrayList<>();
-        PlayerList playerList = ServerLifecycleHooks.getCurrentServer().getPlayerList();
+        PlayerList playerList = null;
+        if (ServerLifecycleHooks.getCurrentServer() != null) {
+            playerList = ServerLifecycleHooks.getCurrentServer().getPlayerList();
+        }
 
         for (UUID uuid : uuids) {
             MutableComponent component;
-            ServerPlayer player = playerList.getPlayer(uuid);
+            ServerPlayer player = null;
+            if (playerList != null) {
+                player = playerList.getPlayer(uuid);
+            }
             if (player != null)
                 component = player.getName().copy()
                         .withStyle(ChatFormatting.GREEN)

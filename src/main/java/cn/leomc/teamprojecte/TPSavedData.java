@@ -23,7 +23,7 @@ public class TPSavedData extends SavedData {
     static TPSavedData getData() {
         if (DATA == null && ServerLifecycleHooks.getCurrentServer() != null)
             DATA = ServerLifecycleHooks.getCurrentServer().overworld().getDataStorage()
-                    .computeIfAbsent(FACTORY, "teamprojecte");
+                    .computeIfAbsent(FACTORY, TeamProjectE.MOD_ID);
         return DATA;
     }
 
