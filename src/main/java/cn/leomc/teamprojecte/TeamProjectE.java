@@ -54,7 +54,12 @@ public class TeamProjectE {
 
     public static List<ServerPlayer> getAllOnline(List<UUID> uuids) {
         return uuids.stream()
-                .map(uuid -> ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(uuid))
+                .map(uuid -> {
+                    if (ServerLifecycleHooks.getCurrentServer() != null) {
+                        return ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(uuid);
+                    }
+                    return null;
+                })
                 .filter(Objects::nonNull)
                 .toList();
     }
