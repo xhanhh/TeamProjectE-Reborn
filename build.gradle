@@ -126,7 +126,15 @@ dependencies {
     // The userdev artifact is a special name and will get all sorts of transformations applied to it.
     implementation "net.neoforged:neoforge:${neo_version}"
 
-    api "curse.maven:projecte-226410:6611984"
+    compileOnly "org.projectlombok:lombok:${lombok_version}"
+    annotationProcessor "org.projectlombok:lombok:${lombok_version}"
+
+    api "curse.maven:projecte-226410:${pe_curse_version}"
+
+    api "me.shedaniel.cloth:cloth-config-neoforge:${cloth_version}"
+    runtimeOnly "curse.maven:catalogue-459701:${catalogue_curse_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
 
 }
 
