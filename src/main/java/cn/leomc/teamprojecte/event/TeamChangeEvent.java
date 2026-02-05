@@ -1,5 +1,6 @@
-package cn.leomc.teamprojecte;
+package cn.leomc.teamprojecte.event;
 
+import cn.leomc.teamprojecte.TPTeam;
 import net.neoforged.bus.api.Event;
 import org.jetbrains.annotations.Nullable;
 

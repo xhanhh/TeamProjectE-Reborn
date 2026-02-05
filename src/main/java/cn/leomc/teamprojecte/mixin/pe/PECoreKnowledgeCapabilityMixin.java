@@ -1,6 +1,6 @@
 package cn.leomc.teamprojecte.mixin.pe;
 
-import cn.leomc.teamprojecte.TeamKnowledgeProvider;
+import cn.leomc.teamprojecte.common.TeamKnowledgeProvider;
 import moze_intel.projecte.PECore;
 import moze_intel.projecte.api.capabilities.PECapabilities;
 import moze_intel.projecte.impl.capability.KnowledgeImpl;

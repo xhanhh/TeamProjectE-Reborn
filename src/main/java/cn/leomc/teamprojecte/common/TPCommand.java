@@ -1,5 +1,8 @@
-package cn.leomc.teamprojecte;
+package cn.leomc.teamprojecte.common;
 
+import cn.leomc.teamprojecte.TPTeam;
+import cn.leomc.teamprojecte.TeamProjectEMod;
+import cn.leomc.teamprojecte.event.TeamChangeEvent;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.mojang.brigadier.Command;

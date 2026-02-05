@@ -1,5 +1,7 @@
-package cn.leomc.teamprojecte;
+package cn.leomc.teamprojecte.common;
 
+import cn.leomc.teamprojecte.TPTeam;
+import cn.leomc.teamprojecte.TeamProjectEMod;
 import com.google.common.base.Suppliers;
 import cn.leomc.teamprojecte.mixin.pe.KnowledgeAttachmentAccessor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;

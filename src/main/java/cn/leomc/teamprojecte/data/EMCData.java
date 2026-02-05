@@ -1,4 +1,4 @@
-package cn.leomc.teamprojecte;
+package cn.leomc.teamprojecte.data;
 
 import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;

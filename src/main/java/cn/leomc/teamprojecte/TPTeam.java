@@ -1,5 +1,7 @@
 package cn.leomc.teamprojecte;
 
+import cn.leomc.teamprojecte.data.EMCData;
+import cn.leomc.teamprojecte.data.KnowledgeData;
 import com.google.common.collect.Lists;
 import lombok.Getter;
 import moze_intel.projecte.api.ItemInfo;

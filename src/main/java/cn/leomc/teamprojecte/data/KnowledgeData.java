@@ -1,4 +1,4 @@
-package cn.leomc.teamprojecte;
+package cn.leomc.teamprojecte.data;
 
 import moze_intel.projecte.api.ItemInfo;
 import net.minecraft.Util;

@@ -1,5 +1,6 @@
 package cn.leomc.teamprojecte;
 
+import cn.leomc.teamprojecte.common.TPCommand;
 import moze_intel.projecte.api.capabilities.PECapabilities;
 import moze_intel.projecte.api.capabilities.IKnowledgeProvider;
 import moze_intel.projecte.gameObjs.registries.PEAttachmentTypes;
