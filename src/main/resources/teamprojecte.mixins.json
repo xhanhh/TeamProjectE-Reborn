@@ -2,6 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "cn.leomc.teamprojecte.mixin",
+  "plugin": "cn.leomc.teamprojecte.mixin.TPMixinPlugin",
   "mixins": [
     "pe.KnowledgeAttachmentAccessor",
     "pe.PECoreKnowledgeCapabilityMixin"
