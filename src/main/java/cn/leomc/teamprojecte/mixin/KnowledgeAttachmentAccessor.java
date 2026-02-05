@@ -19,9 +19,14 @@ public interface KnowledgeAttachmentAccessor {
     ItemStackHandler teamprojecte$getInputLocks();
 
     @Accessor("emc")
+    BigInteger teamprojecte$getEmc();
+
+    @Accessor("emc")
     void teamprojecte$setEmc(BigInteger emc);
+
+    @Accessor("fullKnowledge")
+    boolean teamprojecte$isFullKnowledge();
 
     @Accessor("fullKnowledge")
     void teamprojecte$setFullKnowledge(boolean fullKnowledge);
 }
-
