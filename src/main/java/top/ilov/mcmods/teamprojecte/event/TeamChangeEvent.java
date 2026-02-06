@@ -1,6 +1,6 @@
 package top.ilov.mcmods.teamprojecte.event;
 
-import top.ilov.mcmods.teamprojecte.TPRTeam;
+import top.ilov.mcmods.teamprojecte.common.TPRTeam;
 import net.neoforged.bus.api.Event;
 import org.jetbrains.annotations.Nullable;
 

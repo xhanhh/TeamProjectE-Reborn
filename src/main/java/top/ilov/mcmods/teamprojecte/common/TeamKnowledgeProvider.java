@@ -1,8 +1,7 @@
 package top.ilov.mcmods.teamprojecte.common;
 
-import top.ilov.mcmods.teamprojecte.TPRTeam;
-import top.ilov.mcmods.teamprojecte.TeamProjectERebornMod;
 import com.google.common.base.Suppliers;
+import top.ilov.mcmods.teamprojecte.utils.TeamUtils;
 import top.ilov.mcmods.teamprojecte.mixin.pe.KnowledgeAttachmentAccessor;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -39,7 +38,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
     private final ItemStackHandler inputLocks = new ItemStackHandler(9);
 
     public TeamKnowledgeProvider(@NotNull ServerPlayer player) {
-        this.playerUUID = Suppliers.memoize(() -> TeamProjectERebornMod.getPlayerUUID(player));
+        this.playerUUID = Suppliers.memoize(() -> TeamUtils.getPlayerUUID(player));
     }
 
     public TeamKnowledgeProvider(UUID uuid) {
@@ -47,7 +46,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
     }
 
     private void fireChangedEvent() {
-        TeamProjectERebornMod.getAllOnline(getTeam().getAll())
+        TeamUtils.getAllOnline(getTeam().getAll())
                 .forEach(player -> NeoForge.EVENT_BUS.post(new PlayerKnowledgeChangeEvent(player)));
     }
 
@@ -207,7 +206,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
         if (!getTeam().isSharingEMC() && !getTeam().isSharingKnowledge()) {
             PacketDistributor.sendToPlayer(player, syncPacket);
         } else {
-            TeamProjectERebornMod.getOnlineTeamMembers(TeamProjectERebornMod.getPlayerUUID(player))
+            TeamUtils.getOnlineTeamMembers(TeamUtils.getPlayerUUID(player))
                     .forEach(p -> PacketDistributor.sendToPlayer(p, syncPacket));
         }
     }
@@ -276,7 +275,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
 
     private static void sendPacket(net.minecraft.network.protocol.common.custom.CustomPacketPayload packet, ServerPlayer player, boolean team) {
         if (team) {
-            TeamProjectERebornMod.getOnlineTeamMembers(TeamProjectERebornMod.getPlayerUUID(player))
+            TeamUtils.getOnlineTeamMembers(TeamUtils.getPlayerUUID(player))
                     .forEach(p -> PacketDistributor.sendToPlayer(p, packet));
         } else {
             PacketDistributor.sendToPlayer(player, packet);

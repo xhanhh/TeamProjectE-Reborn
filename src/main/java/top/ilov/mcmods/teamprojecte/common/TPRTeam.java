@@ -1,5 +1,6 @@
-package top.ilov.mcmods.teamprojecte;
+package top.ilov.mcmods.teamprojecte.common;
 
+import top.ilov.mcmods.teamprojecte.utils.TeamUtils;
 import top.ilov.mcmods.teamprojecte.data.EMCData;
 import top.ilov.mcmods.teamprojecte.data.KnowledgeData;
 import com.google.common.collect.Lists;
@@ -17,6 +18,7 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class TPRTeam {
+
     private final UUID teamUUID;
     @Getter
     private UUID owner;
@@ -67,7 +69,7 @@ public class TPRTeam {
 
     public void addMemberWithKnowledge(TPRTeam originalTeam, Player player) {
         markDirty();
-        UUID playerUUID = TeamProjectERebornMod.getPlayerUUID(player);
+        UUID playerUUID = TeamUtils.getPlayerUUID(player);
 
         TPRSavedData data = TPRSavedData.getData();
         if (data != null && !data.hasSnapshot(playerUUID)) {
@@ -79,7 +81,7 @@ public class TPRTeam {
                 BigInteger emc = canRestoreEmc ? originalTeam.getEmc(playerUUID) : BigInteger.ZERO;
                 boolean fullKnowledge = canRestoreKnowledge && originalTeam.hasFullKnowledge(playerUUID);
                 Set<ItemInfo> knowledge = canRestoreKnowledge ? originalTeam.getKnowledge(playerUUID) : Set.of();
-                data.putSnapshot(playerUUID, new TPRSavedData.PlayerSnapshot(emc, fullKnowledge, knowledge));
+                data.putSnapshot(playerUUID, emc, fullKnowledge, knowledge);
             }
         }
 
@@ -96,14 +98,14 @@ public class TPRTeam {
 
     public void addMember(UUID uuid) {
         markDirty();
-        TPRSavedData.getData().invalidateCache(uuid);
+        Objects.requireNonNull(TPRSavedData.getData()).invalidateCache(uuid);
         members.add(uuid);
         sync();
     }
 
     public void removeMember(UUID uuid) {
         markDirty();
-        TPRSavedData.getData().invalidateCache(uuid);
+        Objects.requireNonNull(TPRSavedData.getData()).invalidateCache(uuid);
         knowledge.removeMember(uuid);
         emc.removeMember(uuid);
         if (owner.equals(uuid)) {
@@ -200,7 +202,7 @@ public class TPRTeam {
     }
 
     public void markDirty() {
-        TPRSavedData.getData().setDirty();
+        Objects.requireNonNull(TPRSavedData.getData()).setDirty();
     }
 
     public CompoundTag save() {
@@ -231,13 +233,13 @@ public class TPRTeam {
 
     public static TPRTeam createTeam(UUID uuid) {
         TPRTeam team = new TPRTeam(uuid);
-        TPRSavedData.getData().teams.put(team.getUUID(), team);
+        Objects.requireNonNull(TPRSavedData.getData()).teams.put(team.getUUID(), team);
         TPRSavedData.getData().setDirty();
         return team;
     }
 
     public static TPRTeam getTeam(UUID uuid) {
-        return TPRSavedData.getData().teams.get(uuid);
+        return Objects.requireNonNull(TPRSavedData.getData()).teams.get(uuid);
     }
 
     public static boolean isInTeam(UUID uuid) {
@@ -245,7 +247,7 @@ public class TPRTeam {
     }
 
     public static TPRTeam getTeamByMember(UUID uuid) {
-        UUID teamUUID = TPRSavedData.getData().playerTeamCache.get(uuid);
+        UUID teamUUID = Objects.requireNonNull(TPRSavedData.getData()).playerTeamCache.get(uuid);
 
         if (teamUUID == null)
             for (Map.Entry<UUID, TPRTeam> entry : TPRSavedData.getData().teams.entrySet()) {
@@ -262,11 +264,11 @@ public class TPRTeam {
     }
 
     public void sync() {
-        TeamProjectERebornMod.getAllOnline(getAll()).forEach(TeamProjectERebornMod::sync);
+        TeamUtils.getAllOnline(getAll()).forEach(TeamUtils::sync);
     }
 
     public void sync(UUID uuid) {
-        TeamProjectERebornMod.getAllOnline(List.of(uuid)).forEach(TeamProjectERebornMod::sync);
+        TeamUtils.getAllOnline(List.of(uuid)).forEach(TeamUtils::sync);
     }
 
 }

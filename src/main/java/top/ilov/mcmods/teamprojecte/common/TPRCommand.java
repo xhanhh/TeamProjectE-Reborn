@@ -1,7 +1,6 @@
 package top.ilov.mcmods.teamprojecte.common;
 
-import top.ilov.mcmods.teamprojecte.TPRTeam;
-import top.ilov.mcmods.teamprojecte.TeamProjectERebornMod;
+import top.ilov.mcmods.teamprojecte.utils.TeamUtils;
 import top.ilov.mcmods.teamprojecte.event.TeamChangeEvent;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -85,8 +84,9 @@ public class TPRCommand {
 
     private static boolean requiresInTeam(CommandSourceStack stack) {
         if (stack.getEntity() instanceof ServerPlayer player) {
-            TPRTeam team = TPRTeam.getTeamByMember(TeamProjectERebornMod.getPlayerUUID(player));
-            return team != null && (!team.getOwner().equals(TeamProjectERebornMod.getPlayerUUID(player)) || !team.getMembers().isEmpty());
+            UUID playerUUID = TeamUtils.getPlayerUUID(player);
+            TPRTeam team = TPRTeam.getTeamByMember(playerUUID);
+            return team != null && (!team.getOwner().equals(playerUUID) || !team.getMembers().isEmpty());
         }
         return false;
     }
@@ -95,8 +95,9 @@ public class TPRCommand {
         if (!requiresInTeam(stack))
             return false;
         if (stack.getEntity() instanceof ServerPlayer player) {
-            TPRTeam team = TPRTeam.getTeamByMember(TeamProjectERebornMod.getPlayerUUID(player));
-            return team != null && TeamProjectERebornMod.getPlayerUUID(player).equals(team.getOwner());
+            UUID playerUUID = TeamUtils.getPlayerUUID(player);
+            TPRTeam team = TPRTeam.getTeamByMember(playerUUID);
+            return team != null && playerUUID.equals(team.getOwner());
         }
         return false;
     }
@@ -109,7 +110,7 @@ public class TPRCommand {
             return 0;
 
         ServerPlayer newOwner = EntityArgument.getPlayer(context, "member");
-        UUID newOwnerUUID = TeamProjectERebornMod.getPlayerUUID(newOwner);
+        UUID newOwnerUUID = TeamUtils.getPlayerUUID(newOwner);
 
         if (!team.getAll().contains(newOwnerUUID)) {
             context.getSource().sendFailure(Component.translatable("commands.teamprojecte_reborn.transfer_ownership.not_in_team"));
@@ -121,7 +122,7 @@ public class TPRCommand {
           }
 
           // 如果没入队快照就保留进度
-          TeamProjectERebornMod.bankTeamStateIfNoSnapshot(player, team);
+          TeamUtils.bankTeamStateIfNoSnapshot(player, team);
 
           team.transferOwner(newOwnerUUID);
           newOwner.sendSystemMessage(Component.translatable("commands.teamprojecte_reborn.transfer_ownership.new_owner").withStyle(ChatFormatting.GREEN));
@@ -129,9 +130,9 @@ public class TPRCommand {
           postTeamAttributeChangeEvent(team);
 
           // 刷新服务端命令防止转让队伍命令提示没变
-          TeamProjectERebornMod.refreshCommands(player);
-          TeamProjectERebornMod.refreshCommands(newOwner);
-          TeamProjectERebornMod.getAllOnline(team.getAll()).forEach(TeamProjectERebornMod::refreshCommands);
+          TeamUtils.refreshCommands(player);
+          TeamUtils.refreshCommands(newOwner);
+          TeamUtils.getAllOnline(team.getAll()).forEach(TeamUtils::refreshCommands);
 
           return Command.SINGLE_SUCCESS;
       }
@@ -143,17 +144,17 @@ public class TPRCommand {
             return 0;
 
         List<ServerPlayer> kick = EntityArgument.getPlayers(context, "members").stream()
-                .filter(p -> team.getMembers().contains(TeamProjectERebornMod.getPlayerUUID(p)))
+                .filter(p -> team.getMembers().contains(TeamUtils.getPlayerUUID(p)))
                 .toList();
           kick.forEach(p -> {
-              team.removeMember(TeamProjectERebornMod.getPlayerUUID(p));
-              TeamProjectERebornMod.restoreBankedPersonalDataIfPresent(p);
-              TeamProjectERebornMod.refreshCommands(p);
+              team.removeMember(TeamUtils.getPlayerUUID(p));
+              TeamUtils.restoreBankedPersonalDataIfPresent(p);
+              TeamUtils.refreshCommands(p);
               p.sendSystemMessage(Component.translatable("commands.teamprojecte_reborn.kicked").withStyle(ChatFormatting.RED));
-              UUID uuid = TeamProjectERebornMod.getPlayerUUID(p);
+              UUID uuid = TeamUtils.getPlayerUUID(p);
               postTeamMemberChangeEvent(uuid, team, null);
           });
-          TeamProjectERebornMod.getAllOnline(team.getAll()).forEach(TeamProjectERebornMod::refreshCommands);
+          TeamUtils.getAllOnline(team.getAll()).forEach(TeamUtils::refreshCommands);
 
         if (!kick.isEmpty())
             context.getSource().sendSuccess(() -> Component.translatable("commands.teamprojecte_reborn.kick.success", kick.size()), true);
@@ -211,17 +212,17 @@ public class TPRCommand {
           if (team == null)
               return 0;
 
-          UUID uuid = TeamProjectERebornMod.getPlayerUUID(player);
+          UUID uuid = TeamUtils.getPlayerUUID(player);
           team.removeMember(uuid);
-          boolean restored = TeamProjectERebornMod.restoreBankedPersonalDataIfPresent(player);
+          boolean restored = TeamUtils.restoreBankedPersonalDataIfPresent(player);
           player.sendSystemMessage(Component.translatable(
                   restored
                           ? "commands.teamprojecte_reborn.leave.restored"
                           : "commands.teamprojecte_reborn.leave.no_snapshot"
           ).withStyle(ChatFormatting.GRAY));
 
-          TeamProjectERebornMod.refreshCommands(player);
-          TeamProjectERebornMod.getAllOnline(team.getAll()).forEach(TeamProjectERebornMod::refreshCommands);
+          TeamUtils.refreshCommands(player);
+          TeamUtils.getAllOnline(team.getAll()).forEach(TeamUtils::refreshCommands);
           postTeamMemberChangeEvent(uuid, team, null);
           return Command.SINGLE_SUCCESS;
       }
@@ -229,31 +230,31 @@ public class TPRCommand {
       private static int accept(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
           ServerPlayer player = checkPlayer(context);
           UUID uuid = UuidArgument.getUuid(context, "team");
-        if (!INVITATIONS.get(TeamProjectERebornMod.getPlayerUUID(player)).contains(uuid)) {
+        if (!INVITATIONS.get(TeamUtils.getPlayerUUID(player)).contains(uuid)) {
             context.getSource().sendFailure(Component.translatable("commands.teamprojecte_reborn.invitation.not_found"));
             return -1;
         }
 
-        INVITATIONS.remove(TeamProjectERebornMod.getPlayerUUID(player), uuid);
+        INVITATIONS.remove(TeamUtils.getPlayerUUID(player), uuid);
 
         TPRTeam team = TPRTeam.getTeam(uuid);
         if (team == null) {
             context.getSource().sendFailure(Component.translatable("commands.teamprojecte_reborn.team_not_found"));
             return -1;
         }
-        TPRTeam originalTeam = TPRTeam.getTeamByMember(TeamProjectERebornMod.getPlayerUUID(player));
+        TPRTeam originalTeam = TPRTeam.getTeamByMember(TeamUtils.getPlayerUUID(player));
           if (originalTeam != null)
               team.addMemberWithKnowledge(originalTeam, player);
           else
-              team.addMember(TeamProjectERebornMod.getPlayerUUID(player));
+              team.addMember(TeamUtils.getPlayerUUID(player));
 
         context.getSource().sendSuccess(() -> Component.translatable("commands.teamprojecte_reborn.invite.accepted").withStyle(ChatFormatting.GREEN), false);
         Component component = Component.translatable("commands.teamprojecte_reborn.joined_team", player.getDisplayName()).withStyle(ChatFormatting.GREEN);
-          TeamProjectERebornMod.getAllOnline(team.getAll()).forEach(p -> p.sendSystemMessage(component));
+          TeamUtils.getAllOnline(team.getAll()).forEach(p -> p.sendSystemMessage(component));
           postTeamMemberChangeEvent(uuid, originalTeam, team);
 
-          TeamProjectERebornMod.refreshCommands(player);
-          TeamProjectERebornMod.getAllOnline(team.getAll()).forEach(TeamProjectERebornMod::refreshCommands);
+          TeamUtils.refreshCommands(player);
+          TeamUtils.getAllOnline(team.getAll()).forEach(TeamUtils::refreshCommands);
 
           return Command.SINGLE_SUCCESS;
       }
@@ -262,12 +263,12 @@ public class TPRCommand {
     private static int decline(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = checkPlayer(context);
         UUID uuid = UuidArgument.getUuid(context, "team");
-        if (!INVITATIONS.get(TeamProjectERebornMod.getPlayerUUID(player)).contains(uuid)) {
+        if (!INVITATIONS.get(TeamUtils.getPlayerUUID(player)).contains(uuid)) {
             context.getSource().sendFailure(Component.translatable("commands.teamprojecte_reborn.invitation.not_found"));
             return -1;
         }
 
-        INVITATIONS.remove(TeamProjectERebornMod.getPlayerUUID(player), uuid);
+        INVITATIONS.remove(TeamUtils.getPlayerUUID(player), uuid);
 
         TPRTeam team = TPRTeam.getTeam(uuid);
         if (team == null) {
@@ -276,7 +277,7 @@ public class TPRCommand {
         }
 
         player.sendSystemMessage(Component.translatable("commands.teamprojecte_reborn.invite.declined").withStyle(ChatFormatting.RED));
-        TeamProjectERebornMod.getAllOnline(Collections.singletonList(team.getOwner())).forEach(p ->
+        TeamUtils.getAllOnline(Collections.singletonList(team.getOwner())).forEach(p ->
                 p.sendSystemMessage(Component.translatable("commands.teamprojecte_reborn.invitation.declined", player.getDisplayName())));
 
         return Command.SINGLE_SUCCESS;
@@ -284,17 +285,17 @@ public class TPRCommand {
 
     private static CompletableFuture<Suggestions> createSuggestionsForInvitation(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) throws CommandSyntaxException {
         Player player = checkPlayer(context);
-        return SharedSuggestionProvider.suggest(INVITATIONS.get(TeamProjectERebornMod.getPlayerUUID(player)).stream().map(UUID::toString), builder);
+        return SharedSuggestionProvider.suggest(INVITATIONS.get(TeamUtils.getPlayerUUID(player)).stream().map(UUID::toString), builder);
     }
 
       private static int invite(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
           Player player = checkPlayer(context);
-          TPRTeam team = TPRTeam.getOrCreateTeam(TeamProjectERebornMod.getPlayerUUID(player));
+          TPRTeam team = TPRTeam.getOrCreateTeam(TeamUtils.getPlayerUUID(player));
 
 
         Collection<ServerPlayer> players =
                 EntityArgument.getPlayers(context, "players").stream()
-                        .filter(p -> !team.getAll().contains(TeamProjectERebornMod.getPlayerUUID(p)))
+                        .filter(p -> !team.getAll().contains(TeamUtils.getPlayerUUID(p)))
                         .toList();
 
         Component component = Component.translatable("commands.teamprojecte_reborn.invitation",
@@ -308,7 +309,7 @@ public class TPRCommand {
         );
 
           for (ServerPlayer p : players) {
-              INVITATIONS.put(TeamProjectERebornMod.getPlayerUUID(p), team.getUUID());
+              INVITATIONS.put(TeamUtils.getPlayerUUID(p), team.getUUID());
               p.sendSystemMessage(component);
               p.sendSystemMessage(Component.translatable("commands.teamprojecte_reborn.invitation.emc_notice").withStyle(ChatFormatting.GRAY));
           }
@@ -326,8 +327,9 @@ public class TPRCommand {
     }
 
     private static TPRTeam checkInTeam(Player player) {
-        TPRTeam team = TPRTeam.getTeamByMember(TeamProjectERebornMod.getPlayerUUID(player));
-        if (team == null || (team.getOwner().equals(TeamProjectERebornMod.getPlayerUUID(player)) && team.getMembers().isEmpty())) {
+        UUID playerUUID = TeamUtils.getPlayerUUID(player);
+        TPRTeam team = TPRTeam.getTeamByMember(playerUUID);
+        if (team == null || (team.getOwner().equals(playerUUID) && team.getMembers().isEmpty())) {
             player.sendSystemMessage(Component.translatable("commands.teamprojecte_reborn.leave.not_in_team").withStyle(ChatFormatting.RED));
             return null;
         }
@@ -335,7 +337,7 @@ public class TPRCommand {
     }
 
     private static boolean checkOwner(TPRTeam team, ServerPlayer player) {
-        if (!TeamProjectERebornMod.getPlayerUUID(player).equals(team.getOwner())) {
+        if (!TeamUtils.getPlayerUUID(player).equals(team.getOwner())) {
             player.sendSystemMessage(Component.translatable("commands.teamprojecte_reborn.not_owner").withStyle(ChatFormatting.RED));
             return false;
         }
