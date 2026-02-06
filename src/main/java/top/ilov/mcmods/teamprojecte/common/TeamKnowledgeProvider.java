@@ -12,6 +12,7 @@ import moze_intel.projecte.emc.EMCMappingHandler;
 import moze_intel.projecte.emc.components.ComponentProcessorHelper;
 import moze_intel.projecte.gameObjs.items.Tome;
 import moze_intel.projecte.api.event.PlayerKnowledgeChangeEvent;
+import moze_intel.projecte.gameObjs.registries.PEAttachmentTypes;
 import moze_intel.projecte.impl.capability.KnowledgeImpl;
 import moze_intel.projecte.impl.capability.KnowledgeImpl.KnowledgeAttachment;
 import moze_intel.projecte.network.packets.to_client.knowledge.KnowledgeSyncChangePKT;
@@ -35,14 +36,19 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
 
     private final Supplier<UUID> playerUUID;
 
-    private final ItemStackHandler inputLocks = new ItemStackHandler(9);
+    @Nullable
+    private final ServerPlayer ownerPlayer;
+
+    private final ItemStackHandler inputLocksFallback = new ItemStackHandler(9);
 
     public TeamKnowledgeProvider(@NotNull ServerPlayer player) {
         this.playerUUID = Suppliers.memoize(() -> TeamUtils.getPlayerUUID(player));
+        this.ownerPlayer = player;
     }
 
     public TeamKnowledgeProvider(UUID uuid) {
         this.playerUUID = () -> uuid;
+        this.ownerPlayer = null;
     }
 
     private void fireChangedEvent() {
@@ -187,7 +193,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
     @NotNull
     @Override
     public IItemHandler getInputAndLocks() {
-        return inputLocks;
+        return getOrCreateInputLocks();
     }
 
     @Override
@@ -203,12 +209,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
     @Override
     public void sync(@NotNull ServerPlayer player) {
         KnowledgeSyncPKT syncPacket = new KnowledgeSyncPKT(serializeForClient());
-        if (!getTeam().isSharingEMC() && !getTeam().isSharingKnowledge()) {
-            PacketDistributor.sendToPlayer(player, syncPacket);
-        } else {
-            TeamUtils.getOnlineTeamMembers(TeamUtils.getPlayerUUID(player))
-                    .forEach(p -> PacketDistributor.sendToPlayer(p, syncPacket));
-        }
+        PacketDistributor.sendToPlayer(player, syncPacket);
     }
 
     private KnowledgeAttachment serializeForClient() {
@@ -223,6 +224,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
         knowledge.addAll(getTeam().getKnowledge(playerUUID.get()));
 
         ItemStackHandler locks = accessor.teamprojecte$getInputLocks();
+        ItemStackHandler inputLocks = getOrCreateInputLocks();
         int slots = Math.min(locks.getSlots(), inputLocks.getSlots());
         for (int i = 0; i < slots; i++) {
             locks.setStackInSlot(i, inputLocks.getStackInSlot(i));
@@ -246,6 +248,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
     @Override
     public void syncInputAndLocks(@NotNull ServerPlayer serverPlayer, IntList intList, TargetUpdateType targetUpdateType) {
         if (!intList.isEmpty()) {
+            ItemStackHandler inputLocks = getOrCreateInputLocks();
             int slots = inputLocks.getSlots();
             Int2ObjectMap<ItemStack> stacksToSync = new Int2ObjectOpenHashMap<>();
             for (int slot : intList) {
@@ -263,6 +266,7 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
 
     @Override
     public void receiveInputsAndLocks(Int2ObjectMap<ItemStack> int2ObjectMap) {
+        ItemStackHandler inputLocks = getOrCreateInputLocks();
         int slots = inputLocks.getSlots();
         int2ObjectMap.forEach((key, value) -> {
             int slot = key;
@@ -271,6 +275,15 @@ public class TeamKnowledgeProvider implements IKnowledgeProvider {
                 inputLocks.setStackInSlot(slot, value);
             }
         });
+    }
+
+    private ItemStackHandler getOrCreateInputLocks() {
+        if (ownerPlayer == null) {
+            return inputLocksFallback;
+        }
+        KnowledgeAttachment attachment = ownerPlayer.getData(PEAttachmentTypes.KNOWLEDGE);
+        KnowledgeAttachmentAccessor accessor = (KnowledgeAttachmentAccessor) (Object) attachment;
+        return accessor.teamprojecte$getInputLocks();
     }
 
     private static void sendPacket(net.minecraft.network.protocol.common.custom.CustomPacketPayload packet, ServerPlayer player, boolean team) {
