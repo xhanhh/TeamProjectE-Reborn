@@ -10,9 +10,9 @@ displayName="${mod_name}"
 authors="${mod_authors}"
 credits="${mod_credits}"
 logoFile="logo.png"
+displayURL="https://modrinth.com/project/teamprojecte-reborn"
+updateJSONURL="https://raw.githubusercontent.com/xhanhh/TeamProjectE-Reborn/refs/heads/1.21.1/updates.json"
 description='''
-TeamProjectE-Reborn Mod
-
 ProjectE knowledge and EMC syncing reborn!
 With this mod, you will have shared EMC and knowledge with your ProjectE team members!
 EMC display support for Xaero's Minimap has also been added.
@@ -22,7 +22,6 @@ Forked from TeamProjectE by 6LeoY, maintained by Myxhan(xhanhh)
 
 [[mixins]]
 config="${mod_id}.mixins.json"
-
 [modproperties.${mod_id}]
 catalogueImageIcon="logo.png"
 

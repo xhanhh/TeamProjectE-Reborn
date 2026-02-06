@@ -1,0 +1,10 @@
+{
+  "homepage": "https://modrinth.com/project/teamprojecte-reborn",
+  "1.21.1": {
+    "1.21.1-v1.0.0":"First release."
+  },
+  "promos": {
+    "1.21.1-latest": "1.21.1-v1.0.0",
+    "1.21.1-recommended": "1.21.1-v1.0.0"
+  }
+}
