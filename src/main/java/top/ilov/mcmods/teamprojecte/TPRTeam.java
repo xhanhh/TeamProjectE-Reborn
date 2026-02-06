@@ -68,30 +68,30 @@ public class TPRTeam {
     public void addMemberWithKnowledge(TPRTeam originalTeam, Player player) {
         markDirty();
         UUID playerUUID = TeamProjectERebornMod.getPlayerUUID(player);
+
+        TPRSavedData data = TPRSavedData.getData();
+        if (data != null && !data.hasSnapshot(playerUUID)) {
+            boolean soloPersonal = originalTeam.isSoloFor(playerUUID);
+            boolean canRestoreEmc = soloPersonal || !originalTeam.isSharingEMC();
+            boolean canRestoreKnowledge = soloPersonal || !originalTeam.isSharingKnowledge();
+
+            if (canRestoreEmc || canRestoreKnowledge) {
+                BigInteger emc = canRestoreEmc ? originalTeam.getEmc(playerUUID) : BigInteger.ZERO;
+                boolean fullKnowledge = canRestoreKnowledge && originalTeam.hasFullKnowledge(playerUUID);
+                Set<ItemInfo> knowledge = canRestoreKnowledge ? originalTeam.getKnowledge(playerUUID) : Set.of();
+                data.putSnapshot(playerUUID, new TPRSavedData.PlayerSnapshot(emc, fullKnowledge, knowledge));
+            }
+        }
+
         addMember(playerUUID);
-
-        if (!originalTeam.isSharingEMC()) {
-            BigInteger emcToTransfer = originalTeam.getEmc(playerUUID);
-            if (emcToTransfer.signum() != 0) {
-                if (isSharingEMC()) {
-                    setEmc(getEmc(playerUUID).add(emcToTransfer), playerUUID);
-                } else {
-                    setEmc(emcToTransfer, playerUUID);
-                }
-            }
-            originalTeam.setEmc(BigInteger.ZERO, playerUUID);
+        if (!originalTeam.getUUID().equals(getUUID())) {
+            originalTeam.removeMember(playerUUID);
         }
-
-        if (!originalTeam.isSharingKnowledge()) {
-            if (originalTeam.hasFullKnowledge(playerUUID)) {
-                setFullKnowledge(true, playerUUID);
-                originalTeam.setFullKnowledge(false, playerUUID);
-            }
-            originalTeam.getKnowledge(playerUUID).forEach(k -> addKnowledge(k, playerUUID));
-            originalTeam.clearKnowledge(playerUUID);
-        }
-        originalTeam.removeMember(playerUUID);
         sync();
+    }
+
+    private boolean isSoloFor(UUID uuid) {
+        return owner.equals(uuid) && members.isEmpty();
     }
 
     public void addMember(UUID uuid) {

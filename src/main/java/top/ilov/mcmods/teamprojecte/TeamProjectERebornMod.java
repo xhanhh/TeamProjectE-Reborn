@@ -80,6 +80,53 @@ public class TeamProjectERebornMod {
         }
     }
 
+    public static void refreshCommands(ServerPlayer player) {
+        var server = player.getServer();
+        if (server != null) {
+            server.getCommands().sendCommands(player);
+        }
+    }
+
+    public static boolean restoreBankedPersonalDataIfPresent(ServerPlayer player) {
+        TPRSavedData data = TPRSavedData.getData();
+        if (data == null) {
+            return false;
+        }
+
+        UUID uuid = getPlayerUUID(player);
+        TPRSavedData.PlayerSnapshot snapshot = data.takeSnapshot(uuid);
+        if (snapshot == null) {
+            return false;
+        }
+
+        TPRTeam personalTeam = TPRTeam.getOrCreateTeam(uuid);
+        personalTeam.setEmc(snapshot.emc(), uuid);
+        personalTeam.clearKnowledge(uuid);
+        personalTeam.setFullKnowledge(snapshot.fullKnowledge(), uuid);
+        for (var info : snapshot.knowledge()) {
+            personalTeam.addKnowledge(info, uuid);
+        }
+        sync(player);
+        return true;
+    }
+
+    public static void bankTeamStateIfNoSnapshot(ServerPlayer player, TPRTeam team) {
+        TPRSavedData data = TPRSavedData.getData();
+        if (data == null) {
+            return;
+        }
+        UUID uuid = getPlayerUUID(player);
+        if (data.hasSnapshot(uuid)) {
+            return;
+        }
+
+        data.putSnapshot(uuid, new TPRSavedData.PlayerSnapshot(
+                team.getEmc(uuid),
+                team.hasFullKnowledge(uuid),
+                team.getKnowledge(uuid)
+        ));
+    }
+
     private static void migrateProjectEDataIfNeeded(ServerPlayer player) {
         TPRSavedData data = TPRSavedData.getData();
         if (data == null) {

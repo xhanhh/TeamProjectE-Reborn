@@ -115,18 +115,26 @@ public class TPRCommand {
             context.getSource().sendFailure(Component.translatable("commands.teamprojecte_reborn.transfer_ownership.not_in_team"));
             return 0;
         }
-        if (team.getOwner().equals(newOwnerUUID)) {
-            context.getSource().sendFailure(Component.translatable("commands.teamprojecte_reborn.transfer_ownership.already_owner"));
-            return 0;
-        }
+          if (team.getOwner().equals(newOwnerUUID)) {
+              context.getSource().sendFailure(Component.translatable("commands.teamprojecte_reborn.transfer_ownership.already_owner"));
+              return 0;
+          }
 
-        team.transferOwner(newOwnerUUID);
-        newOwner.sendSystemMessage(Component.translatable("commands.teamprojecte_reborn.transfer_ownership.new_owner").withStyle(ChatFormatting.GREEN));
-        context.getSource().sendSuccess(() -> Component.translatable("commands.teamprojecte_reborn.transfer_ownership.success", newOwner.getName()), true);
-        postTeamAttributeChangeEvent(team);
+          // 如果没入队快照就保留进度
+          TeamProjectERebornMod.bankTeamStateIfNoSnapshot(player, team);
 
-        return Command.SINGLE_SUCCESS;
-    }
+          team.transferOwner(newOwnerUUID);
+          newOwner.sendSystemMessage(Component.translatable("commands.teamprojecte_reborn.transfer_ownership.new_owner").withStyle(ChatFormatting.GREEN));
+          context.getSource().sendSuccess(() -> Component.translatable("commands.teamprojecte_reborn.transfer_ownership.success", newOwner.getName()), true);
+          postTeamAttributeChangeEvent(team);
+
+          // 刷新服务端命令防止转让队伍命令提示没变
+          TeamProjectERebornMod.refreshCommands(player);
+          TeamProjectERebornMod.refreshCommands(newOwner);
+          TeamProjectERebornMod.getAllOnline(team.getAll()).forEach(TeamProjectERebornMod::refreshCommands);
+
+          return Command.SINGLE_SUCCESS;
+      }
 
     private static int kick(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = checkPlayer(context);
@@ -137,12 +145,15 @@ public class TPRCommand {
         List<ServerPlayer> kick = EntityArgument.getPlayers(context, "members").stream()
                 .filter(p -> team.getMembers().contains(TeamProjectERebornMod.getPlayerUUID(p)))
                 .toList();
-        kick.forEach(p -> {
-            team.removeMember(TeamProjectERebornMod.getPlayerUUID(p));
-            p.sendSystemMessage(Component.translatable("commands.teamprojecte_reborn.kicked").withStyle(ChatFormatting.RED));
-            UUID uuid = TeamProjectERebornMod.getPlayerUUID(p);
-            postTeamMemberChangeEvent(uuid, team, null);
-        });
+          kick.forEach(p -> {
+              team.removeMember(TeamProjectERebornMod.getPlayerUUID(p));
+              TeamProjectERebornMod.restoreBankedPersonalDataIfPresent(p);
+              TeamProjectERebornMod.refreshCommands(p);
+              p.sendSystemMessage(Component.translatable("commands.teamprojecte_reborn.kicked").withStyle(ChatFormatting.RED));
+              UUID uuid = TeamProjectERebornMod.getPlayerUUID(p);
+              postTeamMemberChangeEvent(uuid, team, null);
+          });
+          TeamProjectERebornMod.getAllOnline(team.getAll()).forEach(TeamProjectERebornMod::refreshCommands);
 
         if (!kick.isEmpty())
             context.getSource().sendSuccess(() -> Component.translatable("commands.teamprojecte_reborn.kick.success", kick.size()), true);
@@ -194,21 +205,30 @@ public class TPRCommand {
         return ComponentUtils.formatList(components, c -> c);
     }
 
-    private static int leave(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = checkPlayer(context);
-        TPRTeam team = checkInTeam(player);
-        if (team == null)
-            return 0;
+      private static int leave(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+          ServerPlayer player = checkPlayer(context);
+          TPRTeam team = checkInTeam(player);
+          if (team == null)
+              return 0;
 
-        UUID uuid = TeamProjectERebornMod.getPlayerUUID(player);
-        team.removeMember(uuid);
-        postTeamMemberChangeEvent(uuid, team, null);
-        return Command.SINGLE_SUCCESS;
-    }
+          UUID uuid = TeamProjectERebornMod.getPlayerUUID(player);
+          team.removeMember(uuid);
+          boolean restored = TeamProjectERebornMod.restoreBankedPersonalDataIfPresent(player);
+          player.sendSystemMessage(Component.translatable(
+                  restored
+                          ? "commands.teamprojecte_reborn.leave.restored"
+                          : "commands.teamprojecte_reborn.leave.no_snapshot"
+          ).withStyle(ChatFormatting.GRAY));
 
-    private static int accept(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer player = checkPlayer(context);
-        UUID uuid = UuidArgument.getUuid(context, "team");
+          TeamProjectERebornMod.refreshCommands(player);
+          TeamProjectERebornMod.getAllOnline(team.getAll()).forEach(TeamProjectERebornMod::refreshCommands);
+          postTeamMemberChangeEvent(uuid, team, null);
+          return Command.SINGLE_SUCCESS;
+      }
+
+      private static int accept(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+          ServerPlayer player = checkPlayer(context);
+          UUID uuid = UuidArgument.getUuid(context, "team");
         if (!INVITATIONS.get(TeamProjectERebornMod.getPlayerUUID(player)).contains(uuid)) {
             context.getSource().sendFailure(Component.translatable("commands.teamprojecte_reborn.invitation.not_found"));
             return -1;
@@ -222,18 +242,21 @@ public class TPRCommand {
             return -1;
         }
         TPRTeam originalTeam = TPRTeam.getTeamByMember(TeamProjectERebornMod.getPlayerUUID(player));
-        if (originalTeam != null)
-            team.addMemberWithKnowledge(originalTeam, player);
-        else
-            team.addMember(TeamProjectERebornMod.getPlayerUUID(player));
+          if (originalTeam != null)
+              team.addMemberWithKnowledge(originalTeam, player);
+          else
+              team.addMember(TeamProjectERebornMod.getPlayerUUID(player));
 
         context.getSource().sendSuccess(() -> Component.translatable("commands.teamprojecte_reborn.invite.accepted").withStyle(ChatFormatting.GREEN), false);
         Component component = Component.translatable("commands.teamprojecte_reborn.joined_team", player.getDisplayName()).withStyle(ChatFormatting.GREEN);
-        TeamProjectERebornMod.getAllOnline(team.getAll()).forEach(p -> p.sendSystemMessage(component));
-        postTeamMemberChangeEvent(uuid, originalTeam, team);
+          TeamProjectERebornMod.getAllOnline(team.getAll()).forEach(p -> p.sendSystemMessage(component));
+          postTeamMemberChangeEvent(uuid, originalTeam, team);
 
-        return Command.SINGLE_SUCCESS;
-    }
+          TeamProjectERebornMod.refreshCommands(player);
+          TeamProjectERebornMod.getAllOnline(team.getAll()).forEach(TeamProjectERebornMod::refreshCommands);
+
+          return Command.SINGLE_SUCCESS;
+      }
 
 
     private static int decline(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -264,9 +287,9 @@ public class TPRCommand {
         return SharedSuggestionProvider.suggest(INVITATIONS.get(TeamProjectERebornMod.getPlayerUUID(player)).stream().map(UUID::toString), builder);
     }
 
-    private static int invite(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        Player player = checkPlayer(context);
-        TPRTeam team = TPRTeam.getOrCreateTeam(TeamProjectERebornMod.getPlayerUUID(player));
+      private static int invite(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+          Player player = checkPlayer(context);
+          TPRTeam team = TPRTeam.getOrCreateTeam(TeamProjectERebornMod.getPlayerUUID(player));
 
 
         Collection<ServerPlayer> players =
@@ -284,10 +307,11 @@ public class TPRCommand {
                                 .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/teamper decline " + team.getUUID())))
         );
 
-        for (ServerPlayer p : players) {
-            INVITATIONS.put(TeamProjectERebornMod.getPlayerUUID(p), team.getUUID());
-            p.sendSystemMessage(component);
-        }
+          for (ServerPlayer p : players) {
+              INVITATIONS.put(TeamProjectERebornMod.getPlayerUUID(p), team.getUUID());
+              p.sendSystemMessage(component);
+              p.sendSystemMessage(Component.translatable("commands.teamprojecte_reborn.invitation.emc_notice").withStyle(ChatFormatting.GRAY));
+          }
         if (!players.isEmpty())
             context.getSource().sendSuccess(() -> Component.translatable("commands.teamprojecte_reborn.invite.success", players.size()), true);
         else
