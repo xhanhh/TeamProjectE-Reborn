@@ -1,6 +1,5 @@
 package top.ilov.mcmods.teamprojecte.mixin;
 
-import top.ilov.mcmods.teamprojecte.TPRConfig;
 import top.ilov.mcmods.teamprojecte.utils.FMLUtils;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -11,15 +10,9 @@ import java.util.Set;
 
 public class TPRMixinPlugin implements IMixinConfigPlugin {
 
-    public static TPRConfig CONFIG = new TPRConfig();
-
     @Override
     public void onLoad(String mixinPackage) {
-        try {
-            CONFIG = TPRConfig.loadConfig();
-        } catch (Exception e) {
-            CONFIG = new TPRConfig();
-        }
+
     }
 
     @Override
@@ -34,10 +27,6 @@ public class TPRMixinPlugin implements IMixinConfigPlugin {
             case "top.ilov.mcmods.teamprojecte.mixin.pe.KnowledgeAttachmentAccessor",
                  "top.ilov.mcmods.teamprojecte.mixin.pe.PECoreKnowledgeCapabilityMixin" ->
                     FMLUtils.isClassPresent("moze_intel.projecte.PECore");
-
-            case "top.ilov.mcmods.teamprojecte.mixin.xaero.XaeroDisplayMixin" ->
-                    FMLUtils.isClassPresent("xaero.hud.minimap.info.BuiltInInfoDisplays")
-                            && CONFIG.isEnableXaeroMinimapEMCDisplay();
 
             default -> false;
         };

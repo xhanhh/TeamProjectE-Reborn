@@ -15,7 +15,6 @@ updateJSONURL="https://raw.githubusercontent.com/xhanhh/TeamProjectE-Reborn/refs
 description='''
 ProjectE knowledge and EMC syncing reborn!
 With this mod, you will have shared EMC and knowledge with your ProjectE team members!
-EMC display support for Xaero's Minimap has also been added.
 
 Forked from TeamProjectE by 6LeoY, maintained by Myxhan(xhanhh)
 '''
@@ -35,7 +34,7 @@ side="BOTH"
 [[dependencies.${mod_id}]]
 modId="neoforge"
 type="required"
-versionRange="[${neo_version},)"
+versionRange="[4,)"
 ordering="NONE"
 side="BOTH"
 

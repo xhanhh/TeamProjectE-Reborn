@@ -32,17 +32,6 @@
   "commands.teamprojecte_reborn.settings.set.sharing_emc.false": "已将 EMC 共享设为 false",
   "commands.teamprojecte_reborn.settings.set.sharing_emc.true": "已将 EMC 共享设为 true",
   "commands.teamprojecte_reborn.settings.set.sharing_knowledge.false": "已将知识共享设为 false",
-  "commands.teamprojecte_reborn.settings.set.sharing_knowledge.true": "已将知识共享设为 true",
-
-  "xaerominimap.teamprojecte_reborn.infodisplay.pe_emc": "ProjectE 队伍 EMC",
-
-  "config.teamprojecte_reborn.title": "Team ProjectE Reborn 配置",
-  "config.teamprojecte_reborn.client": "客户端",
-  "config.teamprojecte_reborn.enable_xaerominimap_emc_display": "在 Xaero的小地图 信息显示中显示队伍/个人 EMC",
-  "config.teamprojecte_reborn.enable_xaerominimap_emc_display.tooltip": "可在 Xaero的小地图 的信息显示设置中无须重启地开关显示，但此选项优先级更高。有队伍时显示队伍 EMC，没有队伍时显示个人 EMC。",
-  "config.teamprojecte_reborn.enable_xaerominimap_emc_display_hold_shift_show_full": "按住 Shift 时显示完整 EMC 数字",
-  "config.teamprojecte_reborn.enable_xaerominimap_emc_display_hold_shift_show_full.tooltip": "平常显示：132.22E；启用并按住 Shift 时显示：111,111,111",
-  "config.teamprojecte_reborn.enable_xaerominimap_emc_display_rate": "显示队伍/个人 EMC 变化速率",
-  "config.teamprojecte_reborn.enable_xaerominimap_emc_display_rate.tooltip": "当队伍/个人 EMC 发生变化时显示变化速率提示。"
+  "commands.teamprojecte_reborn.settings.set.sharing_knowledge.true": "已将知识共享设为 true"
 }
 
