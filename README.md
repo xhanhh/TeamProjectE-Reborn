@@ -5,6 +5,7 @@ This mod **forked from [Team ProjectE](https://www.curseforge.com/minecraft/mc-m
 
 ### Links
 Modrinth: [https://modrinth.com/project/teamprojecte-reborn](https://modrinth.com/project/teamprojecte-reborn)
+
 CurseForge: [https://www.curseforge.com/minecraft/mc-mods/teamprojecte-reborn](https://www.curseforge.com/minecraft/mc-mods/teamprojecte-reborn)
 
 ### 📖 About:
@@ -16,7 +17,7 @@ This mod inherits the functionality of the original Team ProjectE mod, but adds 
 
 - Support MC 1.21.1
 - **Fixed an issue where EMC and knowledge were cleared when the mod was added to a world that had already been created.** Even if the existing saves already exist the EMC and knowledge data of the player, they will not be cleared.
-- **Integrated display of player/team EMC and EMC change rate in [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) display info** (configurable in config file). The display format of EMC comes from [Project Expansion](https://modrinth.com/mod/project-expansion) and is similar to its display on the screen. If you haven't added Xaero's Minimap mod, this feature won't work.
+- The integration of Xaero's Minimap emc display has been moved to [Project Minimap Hud](https://modrinth.com/mod/project-minimap-hud) (after v1.1.0). ~~Integrated display of player/team EMC and EMC change rate in [Xaero's Minimap](https://modrinth.com/mod/xaeros-minimap) display information.~~
 - Optimized the logic of players joining team to deal with EMC and knowledge. See usage below for details.
 - Fixed an issue where the transfer ownership command would not synchronize in real time.
 
